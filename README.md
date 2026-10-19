@@ -67,6 +67,40 @@ After deployment on any host, the website automatically uses that host's address
 5. The plain list box also shows one link per line for quick copy-paste into Excel.
 6. **Remove** deletes one row from the list, **Clear All** empties the list.
 
+## Option 2 - Colour-wise Variant Upload (new, at the top of the website)
+
+Use this when one jacket design has many colours, for example Black, Blue, Green.
+
+1. Open the website and click **Option 2: Colour-wise Variant Upload** (it is selected by default).
+2. Click **Add Colour**, type only the colour name, for example `Black`.
+3. In that colour row, click each view box and choose one image:
+   - **Front View \*** (required), **Back View**, **Side View**, **Neck View**, **Zoomed view**, **Model Shot View**
+   - Each image uploads at once. When it says **Link ready**, the link is saved in that box.
+   - You can drag & drop an image onto a box, click a box again to replace its image, and copy any one link with its **Copy** button.
+4. Click **Add Another Colour** for the next colour (for example `Blue`) and repeat.
+5. If the Front View is missing for a colour, a gentle warning **"Front View is required"** is shown for that colour and the Front View box is highlighted. The CSV can still be downloaded, but add the Front View before using it for Flipkart/Amazon.
+6. At the end, use any of these:
+   - **Copy All (Colour-wise)** — copies a table separated by tabs (Colour + 6 view links) that you can paste straight into Excel.
+   - **Download CSV (Colour-wise)** — downloads `colour-wise-image-links.csv`.
+   - The preview list and the plain grouped list below show every colour and its 6 links, with a Copy button for each link and for each full row.
+
+### Colour-wise CSV format
+
+Columns exactly:
+
+```
+Colour, Front View, Back View, Side View, Neck View, Zoomed view, Model Shot View
+```
+
+One row per colour. Each cell has that view's image link; it is left blank if that view was not uploaded. Example:
+
+```
+"Black","https://.../front.jpg","https://.../back.jpg","","","",""
+"Blue","https://.../front2.jpg","","","","",""
+```
+
+**Option 1 — Single Images** still works as before: upload many images, get one link per image, **Copy All Links**, or **Download CSV** with columns `Filename, Image Link`.
+
 ## Good to know / limitations
 - This is a simple, free tool. There is no login/password — anyone who knows your public website address can upload. Do not share the address publicly if that matters to you.
 - Free hosting usually sleeps or restarts, and files in `uploads/` may not be permanent there. If you need links that must stay alive for months, use paid hosting with a persistent disk, or upload images to a dedicated image/CDN storage and use those links.

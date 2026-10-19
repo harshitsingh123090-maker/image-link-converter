@@ -16,6 +16,14 @@
   .step{background:#eef2ff;border-radius:12px;padding:12px 8px;font-size:14px}
   .step b{display:block;font-size:20px;color:#4f46e5}
   @media(max-width:640px){.steps{grid-template-columns:1fr}header h1{font-size:23px}}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{flex:1;min-width:220px;border:2px solid #c7d2fe;background:#eef2ff;color:#172033;border-radius:14px;padding:14px 12px;cursor:pointer;text-align:left;font-size:15px}
+  .tab b{display:block;font-size:17px}
+  .tab span{font-size:13px;color:#444}
+  .tab.active{background:#4f46e5;border-color:#4f46e5;color:#fff}
+  .tab.active span{color:#e0e7ff}
+  .panel[hidden]{display:none}
   #drop{border:2px dashed #818cf8;border-radius:16px;padding:34px 14px;text-align:center;background:#eef2ff;cursor:pointer;transition:.2s}
   #drop:hover,#drop.over{background:#e0e7ff;border-color:#4f46e5}
   #drop .big{font-size:20px;font-weight:700}
@@ -23,6 +31,7 @@
   .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;font-size:14px}
   .btn-primary{background:#4f46e5;color:#fff}.btn-green{background:#16a34a;color:#fff}
   .btn-dark{background:#172033;color:#fff}.btn-light{background:#e5e7eb;color:#172033}
+  .btn-small{padding:7px 10px;font-size:12px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
   .item{display:flex;gap:12px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-top:10px;flex-wrap:wrap}
@@ -38,6 +47,36 @@
   .warn{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:12px;padding:12px 14px;font-size:14px}
   .empty{color:#666;text-align:center;padding:16px}
   footer{text-align:center;color:#777;font-size:13px;padding:10px}
+  .hint{font-size:14px;color:#444;margin-bottom:12px}
+  /* Colour-wise */
+  .colour-card{border:2px solid #c7d2fe;border-radius:16px;padding:16px;margin-top:14px;background:#fbfbff}
+  .colour-head{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
+  .colour-head .grow{flex:1;min-width:200px}
+  .colour-name{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;font-weight:700}
+  .front-warning{display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+  .front-warning.show{display:block}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  @media(max-width:760px){.slots{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.slots{grid-template-columns:1fr}}
+  .slot{border:2px dashed #a5b4fc;border-radius:12px;padding:10px;background:#fff;text-align:center}
+  .slot.required-missing{border-color:#f87171;background:#fff7f7}
+  .slot.over{background:#e0e7ff;border-color:#4f46e5}
+  .slot-label{font-weight:700;font-size:14px;margin-bottom:6px}
+  .req{color:#dc2626}
+  .slot-drop{cursor:pointer;padding:8px;border-radius:10px}
+  .slot-drop:hover{background:#eef2ff}
+  .slot img{width:100%;height:110px;object-fit:cover;border-radius:10px;background:#eee;display:none;margin-bottom:6px}
+  .slot img.show{display:block}
+  .slot .choose{font-size:13px;color:#4f46e5;font-weight:700}
+  .slot .slot-status{font-size:12px;margin-top:5px;word-break:break-word}
+  .slot .linkbox input{font-size:12px}
+  .preview-group{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:12px}
+  .preview-group h3{font-size:16px;margin-bottom:8px}
+  .preview-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 0;border-top:1px solid #f1f5f9;font-size:13px}
+  .preview-row:first-of-type{border-top:0}
+  .preview-row .vlabel{font-weight:700;min-width:130px}
+  .preview-row .vlink{flex:1;min-width:200px;word-break:break-all;color:#334155}
+  .preview-row .vlink.empty-link{color:#999}
 </style>
 </head>
 <body>
@@ -53,29 +92,80 @@
       <div class="step"><b>2</b>Copy the links</div>
       <div class="step"><b>3</b>Paste in Amazon / Flipkart sheet</div>
     </div>
+    <p class="hint" style="margin-top:14px">
+      <b>Option 1 — Single Images:</b> upload many images, get one link for each image.<br>
+      <b>Option 2 — Colour-wise Variant Upload:</b> for jackets with colours like Black and Blue. For each colour, upload Front, Back, Side, Neck, Zoomed and Model Shot views, then download one CSV row per colour.
+    </p>
   </div>
 
-  <div class="card">
-    <div id="drop" tabindex="0" role="button" aria-label="Upload images">
-      <div class="big">📤 Drag &amp; drop images here</div>
-      <div class="small">or click to browse — JPG, JPEG, PNG, WEBP, GIF • Many images at once</div>
-    </div>
-    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple hidden>
-
-    <div class="toolbar">
-      <button class="btn btn-primary" id="browseBtn">Choose Images</button>
-      <button class="btn btn-green" id="copyAllBtn" disabled>📋 Copy All Links</button>
-      <button class="btn btn-dark" id="csvBtn" disabled>⬇️ Download CSV (for Bulk Sheet)</button>
-      <button class="btn btn-light" id="clearBtn" disabled>Clear All</button>
-    </div>
-
-    <div id="list"><div class="empty">No images yet. Upload your first image above.</div></div>
+  <div class="tabs" role="tablist" aria-label="Upload options">
+    <button class="tab" id="tabOption1" role="tab" aria-selected="false" onclick="showOption(1)">
+      <b>Option 1: Single Images</b>
+      <span>Many images &rarr; one link for each image</span>
+    </button>
+    <button class="tab active" id="tabOption2" role="tab" aria-selected="true" onclick="showOption(2)">
+      <b>Option 2: Colour-wise Variant Upload</b>
+      <span>One row per colour (Black, Blue...) with 6 views</span>
+    </button>
   </div>
 
-  <div class="card">
-    <label for="plainList">Plain list — one link per line (easy to copy into Excel)</label>
-    <textarea id="plainList" readonly placeholder="Your links will appear here, one per line..."></textarea>
-    <div class="toolbar"><button class="btn btn-primary" id="copyPlainBtn" disabled>Copy This List</button></div>
+  <!-- ================= OPTION 2: COLOUR-WISE ================= -->
+  <div id="panelOption2" class="panel">
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:6px">Colour-wise Variant Upload</h2>
+      <p class="hint">Add one row for each colour, for example <b>Black</b>, then <b>Blue</b>. For each colour upload up to 6 views. <span class="req">Front View *</span> is required. Each image uploads at once and its link is saved in that box. When you finish, copy all links or download the colour-wise CSV.</p>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="addColourBtn">+ Add Colour</button>
+        <button class="btn btn-green" id="copyColourAllBtn">📋 Copy All (Colour-wise)</button>
+        <button class="btn btn-dark" id="csvColourBtn">⬇️ Download CSV (Colour-wise)</button>
+        <button class="btn btn-light" id="clearColoursBtn">Clear All Colours</button>
+      </div>
+
+      <div id="colourList"></div>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="addAnotherColourBtn">+ Add Another Colour</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Preview — links for each colour</label>
+      <div id="colourPreview"><div class="empty">No colours yet. Click “Add Colour” above.</div></div>
+    </div>
+
+    <div class="card">
+      <label for="colourPlainList">Plain list — grouped by colour (easy to read and copy)</label>
+      <textarea id="colourPlainList" readonly placeholder="Example:&#10;Black&#10;Front View: https://...&#10;Back View: https://..."></textarea>
+      <div class="toolbar"><button class="btn btn-primary" id="copyColourPlainBtn">Copy This List</button></div>
+      <p class="hint"><b>Copy All (Colour-wise)</b> copies a table (Colour + 6 view links, separated by tabs) that you can paste straight into Excel. <b>Download CSV (Colour-wise)</b> gives columns: Colour, Front View, Back View, Side View, Neck View, Zoomed view, Model Shot View.</p>
+    </div>
+  </div>
+
+  <!-- ================= OPTION 1: SINGLE IMAGES ================= -->
+  <div id="panelOption1" class="panel" hidden>
+    <div class="card">
+      <div id="drop" tabindex="0" role="button" aria-label="Upload images">
+        <div class="big">📤 Drag &amp; drop images here</div>
+        <div class="small">or click to browse — JPG, JPEG, PNG, WEBP, GIF • Many images at once</div>
+      </div>
+      <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple hidden>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="browseBtn">Choose Images</button>
+        <button class="btn btn-green" id="copyAllBtn" disabled>📋 Copy All Links</button>
+        <button class="btn btn-dark" id="csvBtn" disabled>⬇️ Download CSV (for Bulk Sheet)</button>
+        <button class="btn btn-light" id="clearBtn" disabled>Clear All</button>
+      </div>
+
+      <div id="list"><div class="empty">No images yet. Upload your first image above.</div></div>
+    </div>
+
+    <div class="card">
+      <label for="plainList">Plain list — one link per line (easy to copy into Excel)</label>
+      <textarea id="plainList" readonly placeholder="Your links will appear here, one per line..."></textarea>
+      <div class="toolbar"><button class="btn btn-primary" id="copyPlainBtn" disabled>Copy This List</button></div>
+    </div>
   </div>
 
   <div class="warn">
@@ -88,6 +178,21 @@
 </div>
 
 <script>
+// ---------- Tabs ----------
+window.showOption = function(n){
+  document.getElementById('panelOption1').hidden = n !== 1;
+  document.getElementById('panelOption2').hidden = n !== 2;
+  document.getElementById('tabOption1').classList.toggle('active', n === 1);
+  document.getElementById('tabOption2').classList.toggle('active', n === 2);
+  document.getElementById('tabOption1').setAttribute('aria-selected', String(n === 1));
+  document.getElementById('tabOption2').setAttribute('aria-selected', String(n === 2));
+};
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function flash(btn){ if(!btn) return; const o=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=o,1200); }
+async function copyText(text, btn){ await navigator.clipboard.writeText(text); flash(btn); }
+
+// ================= OPTION 1: Single Images (existing behaviour) =================
 const drop = document.getElementById('drop');
 const input = document.getElementById('fileInput');
 const listEl = document.getElementById('list');
@@ -162,7 +267,6 @@ window.removeItem = id => { items = items.filter(i=>i.id!==id); render(); };
 clearBtn.onclick = () => { items=[]; render(); };
 copyAllBtn.onclick = async e => { await navigator.clipboard.writeText(items.filter(i=>i.link).map(i=>i.link).join('\n')); flash(e.target); };
 copyPlainBtn.onclick = async e => { await navigator.clipboard.writeText(plainEl.value); flash(e.target); };
-function flash(btn){ const o=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=o,1200); }
 
 csvBtn.onclick = () => {
   const rows = [['Filename','Image Link']];
@@ -173,6 +277,234 @@ csvBtn.onclick = () => {
   a.download='image-links.csv'; a.click(); URL.revokeObjectURL(a.href);
 };
 render();
+
+// ================= OPTION 2: Colour-wise Variant Upload =================
+const SLOT_DEFS = [
+  {key:'front', label:'Front View *', csv:'Front View', plain:'Front View', required:true},
+  {key:'back', label:'Back View', csv:'Back View', plain:'Back View', required:false},
+  {key:'side', label:'Side View', csv:'Side View', plain:'Side View', required:false},
+  {key:'neck', label:'Neck View', csv:'Neck View', plain:'Neck View', required:false},
+  {key:'zoomed', label:'Zoomed view', csv:'Zoomed view', plain:'Zoomed view', required:false},
+  {key:'model', label:'Model Shot View', csv:'Model Shot View', plain:'Model Shot View', required:false}
+];
+const colourListEl = document.getElementById('colourList');
+const colourPreviewEl = document.getElementById('colourPreview');
+const colourPlainEl = document.getElementById('colourPlainList');
+let colours = []; // {id, name, slots:{front:{link,status,error,preview}, ...}}
+
+function newSlots(){
+  const s = {};
+  SLOT_DEFS.forEach(d => { s[d.key] = {link:'', status:'', error:'', preview:''}; });
+  return s;
+}
+
+function addColour(name){
+  const colour = {id: Math.random().toString(36).slice(2), name: name || '', slots: newSlots()};
+  colours.push(colour);
+  buildColourCard(colour);
+  refreshColourOutputs();
+  return colour;
+}
+
+function buildColourCard(colour){
+  const card = document.createElement('div');
+  card.className = 'colour-card';
+  card.id = 'colour-' + colour.id;
+
+  const slotsHtml = SLOT_DEFS.map(d => `
+    <div class="slot" data-slot="${d.key}">
+      <div class="slot-label">${escHtml(d.label)}${d.required ? '' : ''}</div>
+      <div class="slot-drop" title="Click or drag an image here">
+        <img alt="">
+        <div class="choose">📤 Click / drag image</div>
+        <div style="font-size:12px;color:#666">One image</div>
+      </div>
+      <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" hidden>
+      <div class="slot-status status"></div>
+      <div class="slot-link"></div>
+    </div>`).join('');
+
+  card.innerHTML = `
+    <div class="colour-head">
+      <div class="grow">
+        <label style="margin-bottom:4px">Colour Name</label>
+        <input class="colour-name" type="text" placeholder="e.g. Black" value="${escHtml(colour.name)}">
+      </div>
+      <button class="btn btn-light" type="button" data-action="remove-colour">Remove colour</button>
+    </div>
+    <div class="front-warning">⚠️ Front View is required for this colour. Please upload the Front View image.</div>
+    <div class="slots">${slotsHtml}</div>`;
+
+  const nameInput = card.querySelector('.colour-name');
+  nameInput.addEventListener('input', () => { colour.name = nameInput.value; refreshColourOutputs(); });
+
+  card.querySelector('[data-action="remove-colour"]').onclick = () => {
+    colours = colours.filter(c => c.id !== colour.id);
+    card.remove();
+    refreshColourOutputs();
+  };
+
+  card.querySelectorAll('.slot').forEach(slotEl => {
+    const key = slotEl.getAttribute('data-slot');
+    const fileInput = slotEl.querySelector('input[type="file"]');
+    const dropArea = slotEl.querySelector('.slot-drop');
+    dropArea.onclick = () => fileInput.click();
+    ['dragenter','dragover'].forEach(ev => slotEl.addEventListener(ev, e => { e.preventDefault(); slotEl.classList.add('over'); }));
+    ['dragleave','drop'].forEach(ev => slotEl.addEventListener(ev, e => { e.preventDefault(); slotEl.classList.remove('over'); }));
+    slotEl.addEventListener('drop', e => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) uploadColourSlot(colour, key, f);
+    });
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (f) uploadColourSlot(colour, key, f);
+    });
+  });
+
+  colourListEl.appendChild(card);
+}
+
+function getSlotEls(colour, key){
+  const card = document.getElementById('colour-' + colour.id);
+  if (!card) return null;
+  const slotEl = card.querySelector('.slot[data-slot="' + key + '"]');
+  if (!slotEl) return null;
+  return {
+    card, slotEl,
+    img: slotEl.querySelector('img'),
+    statusEl: slotEl.querySelector('.slot-status'),
+    linkEl: slotEl.querySelector('.slot-link')
+  };
+}
+
+function updateSlotUI(colour, key){
+  const els = getSlotEls(colour, key);
+  if (!els) return;
+  const slot = colour.slots[key];
+  const def = SLOT_DEFS.find(d => d.key === key);
+  if (slot.preview) { els.img.src = slot.preview; els.img.classList.add('show'); }
+  else if (slot.link) { els.img.src = slot.link; els.img.classList.add('show'); }
+  else { els.img.removeAttribute('src'); els.img.classList.remove('show'); }
+
+  if (slot.status === 'uploading') {
+    els.statusEl.className = 'slot-status status wait';
+    els.statusEl.textContent = '⏳ Uploading...';
+    els.linkEl.innerHTML = '';
+  } else if (slot.status === 'error') {
+    els.statusEl.className = 'slot-status status err';
+    els.statusEl.textContent = '❌ ' + (slot.error || 'Upload failed. Click to try again.');
+    els.linkEl.innerHTML = '';
+  } else if (slot.link) {
+    els.statusEl.className = 'slot-status status ok';
+    els.statusEl.textContent = '✅ Link ready';
+    els.linkEl.innerHTML = '<div class="linkbox"><input readonly value="' + escHtml(slot.link) + '"><button class="btn btn-primary btn-small" type="button">Copy</button></div>';
+    els.linkEl.querySelector('button').onclick = function(){ copyText(slot.link, this); };
+  } else {
+    els.statusEl.className = 'slot-status status';
+    els.statusEl.textContent = '';
+    els.linkEl.innerHTML = '';
+  }
+  // Required Front View highlight
+  const isFront = def && def.required;
+  els.slotEl.classList.toggle('required-missing', !!(isFront && !slot.link && slot.status !== 'uploading'));
+}
+
+async function uploadColourSlot(colour, key, file){
+  const valid = /\.(jpe?g|png|webp|gif)$/i.test(file.name) || (file.type && file.type.startsWith('image/'));
+  const slot = colour.slots[key];
+  if (!valid) { slot.status = 'error'; slot.error = 'Please choose JPG, PNG, WEBP or GIF.'; updateSlotUI(colour, key); refreshColourOutputs(); return; }
+  if (slot.preview) { try { URL.revokeObjectURL(slot.preview); } catch(e){} }
+  slot.preview = URL.createObjectURL(file);
+  slot.status = 'uploading'; slot.error = ''; // keep old link? replaced on success
+  updateSlotUI(colour, key); refreshColourOutputs();
+  const fd = new FormData(); fd.append('file', file);
+  try{
+    const res = await fetch('/upload', {method:'POST', body:fd});
+    const data = await res.json();
+    if (!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
+    slot.link = data.files[0].link; slot.status = 'ok'; slot.error = '';
+  }catch(err){ slot.status = 'error'; slot.error = err.message; }
+  updateSlotUI(colour, key); refreshColourOutputs();
+}
+
+function colourDisplayName(colour){ return colour.name.trim() || '(No colour name)'; }
+
+function refreshColourOutputs(){
+  // Validation warnings + front slot highlight
+  colours.forEach(colour => {
+    SLOT_DEFS.forEach(d => updateSlotUI(colour, d.key));
+    const card = document.getElementById('colour-' + colour.id);
+    if (card) {
+      const warn = card.querySelector('.front-warning');
+      const front = colour.slots.front;
+      const missing = !front.link && front.status !== 'uploading';
+      if (warn) warn.classList.toggle('show', missing);
+    }
+  });
+
+  if (!colours.length) {
+    colourPreviewEl.innerHTML = '<div class="empty">No colours yet. Click “Add Colour” above.</div>';
+    colourPlainEl.value = '';
+    return;
+  }
+
+  // Preview table/list
+  colourPreviewEl.innerHTML = colours.map(colour => {
+    const rows = SLOT_DEFS.map(d => {
+      const link = colour.slots[d.key].link;
+      return '<div class="preview-row"><span class="vlabel">' + escHtml(d.csv) + (d.required ? ' <span class="req">*</span>' : '') + '</span>' +
+        (link
+          ? '<span class="vlink">' + escHtml(link) + '</span><button class="btn btn-primary btn-small" type="button" onclick="copyColourLink(\'' + colour.id + '\',\'' + d.key + '\',this)">Copy</button>'
+          : '<span class="vlink empty-link">— not uploaded yet —</span>') +
+        '</div>';
+    }).join('');
+    return '<div class="preview-group"><h3>' + escHtml(colourDisplayName(colour)) +
+      ' <button class="btn btn-light btn-small" type="button" onclick="copyColourRow(\'' + colour.id + '\',this)">Copy row</button></h3>' + rows + '</div>';
+  }).join('');
+
+  // Plain grouped list
+  colourPlainEl.value = colours.map(colour => {
+    const lines = [colourDisplayName(colour)];
+    SLOT_DEFS.forEach(d => { lines.push(d.plain + ': ' + (colour.slots[d.key].link || '')); });
+    return lines.join('\n');
+  }).join('\n\n');
+}
+
+window.copyColourLink = function(colourId, key, btn){
+  const colour = colours.find(c => c.id === colourId); if (!colour) return;
+  const link = colour.slots[key].link; if (link) copyText(link, btn);
+};
+window.copyColourRow = function(colourId, btn){
+  const colour = colours.find(c => c.id === colourId); if (!colour) return;
+  const row = [colourDisplayName(colour)].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || '')).join('\t');
+  copyText(row, btn);
+};
+
+function colourTableText(){
+  const header = ['Colour'].concat(SLOT_DEFS.map(d => d.csv)).join('\t');
+  const rows = colours.map(colour => [colour.name.trim()].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || '')).join('\t'));
+  return [header].concat(rows).join('\n');
+}
+
+document.getElementById('addColourBtn').onclick = () => addColour('');
+document.getElementById('addAnotherColourBtn').onclick = () => addColour('');
+document.getElementById('clearColoursBtn').onclick = () => { colours = []; colourListEl.innerHTML = ''; refreshColourOutputs(); };
+document.getElementById('copyColourAllBtn').onclick = function(){ if (!colours.length) { alert('Please add a colour first.'); return; } copyText(colourTableText(), this); };
+document.getElementById('copyColourPlainBtn').onclick = function(){ if (!colourPlainEl.value) { alert('Please add a colour first.'); return; } copyText(colourPlainEl.value, this); };
+document.getElementById('csvColourBtn').onclick = () => {
+  if (!colours.length) { alert('Please add a colour first.'); return; }
+  const rows = [['Colour'].concat(SLOT_DEFS.map(d => d.csv))];
+  colours.forEach(colour => rows.push([colour.name.trim()].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || ''))));
+  const csv = rows.map(r => r.map(c => '"' + esc(String(c)) + '"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'colour-wise-image-links.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// Start with one empty colour row so Option 2 is ready to use.
+addColour('');
+showOption(2);
 </script>
 </body>
 </html>
