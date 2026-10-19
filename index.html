@@ -16,7 +16,6 @@
   .step{background:#eef2ff;border-radius:12px;padding:12px 8px;font-size:14px}
   .step b{display:block;font-size:20px;color:#4f46e5}
   @media(max-width:640px){.steps{grid-template-columns:1fr}header h1{font-size:23px}}
-  /* Tabs */
   .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
   .tab{flex:1;min-width:220px;border:2px solid #c7d2fe;background:#eef2ff;color:#172033;border-radius:14px;padding:14px 12px;cursor:pointer;text-align:left;font-size:15px}
   .tab b{display:block;font-size:17px}
@@ -48,35 +47,15 @@
   .empty{color:#666;text-align:center;padding:16px}
   footer{text-align:center;color:#777;font-size:13px;padding:10px}
   .hint{font-size:14px;color:#444;margin-bottom:12px}
-  /* Colour-wise */
   .colour-card{border:2px solid #c7d2fe;border-radius:16px;padding:16px;margin-top:14px;background:#fbfbff}
   .colour-head{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
   .colour-head .grow{flex:1;min-width:200px}
   .colour-name{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;font-weight:700}
-  .front-warning{display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
-  .front-warning.show{display:block}
-  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-  @media(max-width:760px){.slots{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:480px){.slots{grid-template-columns:1fr}}
-  .slot{border:2px dashed #a5b4fc;border-radius:12px;padding:10px;background:#fff;text-align:center}
-  .slot.required-missing{border-color:#f87171;background:#fff7f7}
-  .slot.over{background:#e0e7ff;border-color:#4f46e5}
-  .slot-label{font-weight:700;font-size:14px;margin-bottom:6px}
-  .req{color:#dc2626}
-  .slot-drop{cursor:pointer;padding:8px;border-radius:10px}
-  .slot-drop:hover{background:#eef2ff}
-  .slot img{width:100%;height:110px;object-fit:cover;border-radius:10px;background:#eee;display:none;margin-bottom:6px}
-  .slot img.show{display:block}
-  .slot .choose{font-size:13px;color:#4f46e5;font-weight:700}
-  .slot .slot-status{font-size:12px;margin-top:5px;word-break:break-word}
-  .slot .linkbox input{font-size:12px}
-  .preview-group{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:12px}
-  .preview-group h3{font-size:16px;margin-bottom:8px}
-  .preview-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 0;border-top:1px solid #f1f5f9;font-size:13px}
-  .preview-row:first-of-type{border-top:0}
-  .preview-row .vlabel{font-weight:700;min-width:130px}
-  .preview-row .vlink{flex:1;min-width:200px;word-break:break-all;color:#334155}
-  .preview-row .vlink.empty-link{color:#999}
+  .colour-count{font-size:13px;color:#555;padding:10px 4px}
+  .colour-drop{border:2px dashed #818cf8;border-radius:14px;padding:24px 12px;text-align:center;background:#eef2ff;cursor:pointer;transition:.2s;margin-top:10px}
+  .colour-drop:hover,.colour-drop.over{background:#e0e7ff;border-color:#4f46e5}
+  .colour-drop .big{font-size:17px;font-weight:700}
+  .colour-drop .small{color:#555;font-size:13px;margin-top:3px}
 </style>
 </head>
 <body>
@@ -94,7 +73,7 @@
     </div>
     <p class="hint" style="margin-top:14px">
       <b>Option 1 — Single Images:</b> upload many images, get one link for each image.<br>
-      <b>Option 2 — Colour-wise Variant Upload:</b> for jackets with colours like Black and Blue. For each colour, upload Front, Back, Side, Neck, Zoomed and Model Shot views, then download one CSV row per colour.
+      <b>Option 2 — Colour-wise Upload:</b> images divided only by colour. For each colour add a colour (Black, Blue) and upload all images of that colour, get links grouped by colour.
     </p>
   </div>
 
@@ -104,16 +83,16 @@
       <span>Many images &rarr; one link for each image</span>
     </button>
     <button class="tab active" id="tabOption2" role="tab" aria-selected="true" onclick="showOption(2)">
-      <b>Option 2: Colour-wise Variant Upload</b>
-      <span>One row per colour (Black, Blue...) with 6 views</span>
+      <b>Option 2: Colour-wise Upload</b>
+      <span>Images divided only by colour</span>
     </button>
   </div>
 
   <!-- ================= OPTION 2: COLOUR-WISE ================= -->
   <div id="panelOption2" class="panel">
     <div class="card">
-      <h2 style="font-size:20px;margin-bottom:6px">Colour-wise Variant Upload</h2>
-      <p class="hint">Add one row for each colour, for example <b>Black</b>, then <b>Blue</b>. For each colour upload up to 6 views. <span class="req">Front View *</span> is required. Each image uploads at once and its link is saved in that box. When you finish, copy all links or download the colour-wise CSV.</p>
+      <h2 style="font-size:20px;margin-bottom:6px">Colour-wise Upload</h2>
+      <p class="hint">Images divided only by colour. Add a colour like <b>Black</b>, upload all images of that colour together, then add another colour like <b>Blue</b> and upload its images. Each image gets its own link, grouped under its colour.</p>
 
       <div class="toolbar">
         <button class="btn btn-primary" id="addColourBtn">+ Add Colour</button>
@@ -130,15 +109,10 @@
     </div>
 
     <div class="card">
-      <label>Preview — links for each colour</label>
-      <div id="colourPreview"><div class="empty">No colours yet. Click “Add Colour” above.</div></div>
-    </div>
-
-    <div class="card">
       <label for="colourPlainList">Plain list — grouped by colour (easy to read and copy)</label>
-      <textarea id="colourPlainList" readonly placeholder="Example:&#10;Black&#10;Front View: https://...&#10;Back View: https://..."></textarea>
+      <textarea id="colourPlainList" readonly placeholder="Example:&#10;Black&#10;https://...&#10;https://...&#10;&#10;Blue&#10;https://..."></textarea>
       <div class="toolbar"><button class="btn btn-primary" id="copyColourPlainBtn">Copy This List</button></div>
-      <p class="hint"><b>Copy All (Colour-wise)</b> copies a table (Colour + 6 view links, separated by tabs) that you can paste straight into Excel. <b>Download CSV (Colour-wise)</b> gives columns: Colour, Front View, Back View, Side View, Neck View, Zoomed view, Model Shot View.</p>
+      <p class="hint"><b>Copy All (Colour-wise)</b> copies the same grouped list: colour name on one line, then one link per line under it, with a blank line between colours. <b>Download CSV (Colour-wise)</b> gives columns: Colour, Filename, Image Link — one row per image.</p>
     </div>
   </div>
 
@@ -201,7 +175,7 @@ const copyAllBtn = document.getElementById('copyAllBtn');
 const csvBtn = document.getElementById('csvBtn');
 const clearBtn = document.getElementById('clearBtn');
 const copyPlainBtn = document.getElementById('copyPlainBtn');
-let items = []; // {id, name, size, link, status}
+let items = [];
 
 document.getElementById('browseBtn').onclick = () => input.click();
 drop.onclick = () => input.click();
@@ -241,11 +215,11 @@ function render(){
       <div class="item">
         <img src="${it.preview||it.link}" alt="">
         <div class="meta">
-          <div class="fname">${it.name.replace(/</g,'&lt;')}</div>
+          <div class="fname">${escHtml(it.name)}</div>
           <div class="fsize">${fmtSize(it.size)}</div>
-          ${it.link ? `<div class="linkbox"><input readonly value="${it.link}"><button class="btn btn-primary" onclick="copyLink('${it.id}',this)">Copy</button></div>
+          ${it.link ? `<div class="linkbox"><input readonly value="${escHtml(it.link)}"><button class="btn btn-primary" onclick="copyLink('${it.id}',this)">Copy</button></div>
           <div class="status ok">✅ Link ready</div>` :
-          it.status==='error' ? `<div class="status err">❌ ${it.error||'Failed'}</div>` :
+          it.status==='error' ? `<div class="status err">❌ ${escHtml(it.error||'Failed')}</div>` :
           `<div class="status wait">⏳ Uploading...</div>`}
         </div>
         <button class="btn btn-light" onclick="removeItem('${it.id}')">Remove</button>
@@ -278,28 +252,15 @@ csvBtn.onclick = () => {
 };
 render();
 
-// ================= OPTION 2: Colour-wise Variant Upload =================
-const SLOT_DEFS = [
-  {key:'front', label:'Front View *', csv:'Front View', plain:'Front View', required:true},
-  {key:'back', label:'Back View', csv:'Back View', plain:'Back View', required:false},
-  {key:'side', label:'Side View', csv:'Side View', plain:'Side View', required:false},
-  {key:'neck', label:'Neck View', csv:'Neck View', plain:'Neck View', required:false},
-  {key:'zoomed', label:'Zoomed view', csv:'Zoomed view', plain:'Zoomed view', required:false},
-  {key:'model', label:'Model Shot View', csv:'Model Shot View', plain:'Model Shot View', required:false}
-];
+// ================= OPTION 2: Colour-wise Upload (divided only by colour) =================
 const colourListEl = document.getElementById('colourList');
-const colourPreviewEl = document.getElementById('colourPreview');
 const colourPlainEl = document.getElementById('colourPlainList');
-let colours = []; // {id, name, slots:{front:{link,status,error,preview}, ...}}
+let colours = []; // {id, name, images:[{id,name,savedName,size,link,status,error,preview}]}
 
-function newSlots(){
-  const s = {};
-  SLOT_DEFS.forEach(d => { s[d.key] = {link:'', status:'', error:'', preview:''}; });
-  return s;
-}
+function colourDisplayName(colour){ return colour.name.trim() || '(No colour name)'; }
 
 function addColour(name){
-  const colour = {id: Math.random().toString(36).slice(2), name: name || '', slots: newSlots()};
+  const colour = {id: Math.random().toString(36).slice(2), name: name || '', images: []};
   colours.push(colour);
   buildColourCard(colour);
   refreshColourOutputs();
@@ -310,30 +271,22 @@ function buildColourCard(colour){
   const card = document.createElement('div');
   card.className = 'colour-card';
   card.id = 'colour-' + colour.id;
-
-  const slotsHtml = SLOT_DEFS.map(d => `
-    <div class="slot" data-slot="${d.key}">
-      <div class="slot-label">${escHtml(d.label)}${d.required ? '' : ''}</div>
-      <div class="slot-drop" title="Click or drag an image here">
-        <img alt="">
-        <div class="choose">📤 Click / drag image</div>
-        <div style="font-size:12px;color:#666">One image</div>
-      </div>
-      <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" hidden>
-      <div class="slot-status status"></div>
-      <div class="slot-link"></div>
-    </div>`).join('');
-
   card.innerHTML = `
     <div class="colour-head">
       <div class="grow">
         <label style="margin-bottom:4px">Colour Name</label>
         <input class="colour-name" type="text" placeholder="e.g. Black" value="${escHtml(colour.name)}">
       </div>
-      <button class="btn btn-light" type="button" data-action="remove-colour">Remove colour</button>
+      <span class="colour-count">0 images</span>
+      <button class="btn btn-green btn-small" type="button" data-action="copy-colour">Copy Links</button>
+      <button class="btn btn-light" type="button" data-action="remove-colour">Remove Colour</button>
     </div>
-    <div class="front-warning">⚠️ Front View is required for this colour. Please upload the Front View image.</div>
-    <div class="slots">${slotsHtml}</div>`;
+    <div class="colour-drop" tabindex="0" role="button" aria-label="Upload images for this colour">
+      <div class="big">📤 Drag &amp; drop images for this colour here</div>
+      <div class="small">or click to browse — JPG, JPEG, PNG, WEBP, GIF • Many images at once, all for this colour</div>
+    </div>
+    <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple hidden>
+    <div class="colour-images"><div class="empty">No images for this colour yet.</div></div>`;
 
   const nameInput = card.querySelector('.colour-name');
   nameInput.addEventListener('input', () => { colour.name = nameInput.value; refreshColourOutputs(); });
@@ -343,166 +296,109 @@ function buildColourCard(colour){
     card.remove();
     refreshColourOutputs();
   };
+  card.querySelector('[data-action="copy-colour"]').onclick = function(){
+    const links = colour.images.filter(i=>i.link).map(i=>i.link);
+    if(!links.length){ alert('No links yet for this colour.'); return; }
+    copyText(links.join('\n'), this);
+  };
 
-  card.querySelectorAll('.slot').forEach(slotEl => {
-    const key = slotEl.getAttribute('data-slot');
-    const fileInput = slotEl.querySelector('input[type="file"]');
-    const dropArea = slotEl.querySelector('.slot-drop');
-    dropArea.onclick = () => fileInput.click();
-    ['dragenter','dragover'].forEach(ev => slotEl.addEventListener(ev, e => { e.preventDefault(); slotEl.classList.add('over'); }));
-    ['dragleave','drop'].forEach(ev => slotEl.addEventListener(ev, e => { e.preventDefault(); slotEl.classList.remove('over'); }));
-    slotEl.addEventListener('drop', e => {
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) uploadColourSlot(colour, key, f);
-    });
-    fileInput.addEventListener('change', () => {
-      const f = fileInput.files && fileInput.files[0];
-      fileInput.value = '';
-      if (f) uploadColourSlot(colour, key, f);
-    });
-  });
+  const dropArea = card.querySelector('.colour-drop');
+  const fileInput = card.querySelector('input[type="file"]');
+  dropArea.onclick = () => fileInput.click();
+  dropArea.onkeydown = e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();} };
+  ['dragenter','dragover'].forEach(ev => dropArea.addEventListener(ev, e => { e.preventDefault(); dropArea.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, e => { e.preventDefault(); dropArea.classList.remove('over'); }));
+  dropArea.addEventListener('drop', e => { if(e.dataTransfer.files) handleColourFiles(colour, e.dataTransfer.files); });
+  fileInput.addEventListener('change', () => { handleColourFiles(colour, fileInput.files); fileInput.value=''; });
 
   colourListEl.appendChild(card);
 }
 
-function getSlotEls(colour, key){
-  const card = document.getElementById('colour-' + colour.id);
-  if (!card) return null;
-  const slotEl = card.querySelector('.slot[data-slot="' + key + '"]');
-  if (!slotEl) return null;
-  return {
-    card, slotEl,
-    img: slotEl.querySelector('img'),
-    statusEl: slotEl.querySelector('.slot-status'),
-    linkEl: slotEl.querySelector('.slot-link')
-  };
+function handleColourFiles(colour, fileList){
+  const files = [...fileList].filter(f=>/\.(jpe?g|png|webp|gif)$/i.test(f.name) || (f.type && f.type.startsWith('image/')));
+  if(!files.length){ alert('Please choose image files: JPG, PNG, WEBP or GIF'); return; }
+  files.forEach(f => uploadColourImage(colour, f));
 }
 
-function updateSlotUI(colour, key){
-  const els = getSlotEls(colour, key);
-  if (!els) return;
-  const slot = colour.slots[key];
-  const def = SLOT_DEFS.find(d => d.key === key);
-  if (slot.preview) { els.img.src = slot.preview; els.img.classList.add('show'); }
-  else if (slot.link) { els.img.src = slot.link; els.img.classList.add('show'); }
-  else { els.img.removeAttribute('src'); els.img.classList.remove('show'); }
-
-  if (slot.status === 'uploading') {
-    els.statusEl.className = 'slot-status status wait';
-    els.statusEl.textContent = '⏳ Uploading...';
-    els.linkEl.innerHTML = '';
-  } else if (slot.status === 'error') {
-    els.statusEl.className = 'slot-status status err';
-    els.statusEl.textContent = '❌ ' + (slot.error || 'Upload failed. Click to try again.');
-    els.linkEl.innerHTML = '';
-  } else if (slot.link) {
-    els.statusEl.className = 'slot-status status ok';
-    els.statusEl.textContent = '✅ Link ready';
-    els.linkEl.innerHTML = '<div class="linkbox"><input readonly value="' + escHtml(slot.link) + '"><button class="btn btn-primary btn-small" type="button">Copy</button></div>';
-    els.linkEl.querySelector('button').onclick = function(){ copyText(slot.link, this); };
-  } else {
-    els.statusEl.className = 'slot-status status';
-    els.statusEl.textContent = '';
-    els.linkEl.innerHTML = '';
-  }
-  // Required Front View highlight
-  const isFront = def && def.required;
-  els.slotEl.classList.toggle('required-missing', !!(isFront && !slot.link && slot.status !== 'uploading'));
-}
-
-async function uploadColourSlot(colour, key, file){
-  const valid = /\.(jpe?g|png|webp|gif)$/i.test(file.name) || (file.type && file.type.startsWith('image/'));
-  const slot = colour.slots[key];
-  if (!valid) { slot.status = 'error'; slot.error = 'Please choose JPG, PNG, WEBP or GIF.'; updateSlotUI(colour, key); refreshColourOutputs(); return; }
-  if (slot.preview) { try { URL.revokeObjectURL(slot.preview); } catch(e){} }
-  slot.preview = URL.createObjectURL(file);
-  slot.status = 'uploading'; slot.error = ''; // keep old link? replaced on success
-  updateSlotUI(colour, key); refreshColourOutputs();
+async function uploadColourImage(colour, file){
+  const img = {id: Math.random().toString(36).slice(2), name:file.name, savedName:'', size:file.size, link:'', status:'uploading', error:'', preview:URL.createObjectURL(file)};
+  colour.images.push(img);
+  renderColourImages(colour);
+  refreshColourOutputs();
   const fd = new FormData(); fd.append('file', file);
   try{
     const res = await fetch('/upload', {method:'POST', body:fd});
     const data = await res.json();
-    if (!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
-    slot.link = data.files[0].link; slot.status = 'ok'; slot.error = '';
-  }catch(err){ slot.status = 'error'; slot.error = err.message; }
-  updateSlotUI(colour, key); refreshColourOutputs();
+    if(!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
+    img.link = data.files[0].link; img.savedName = data.files[0].filename; img.status='ok';
+  }catch(err){ img.status='error'; img.error=err.message; }
+  renderColourImages(colour);
+  refreshColourOutputs();
 }
 
-function colourDisplayName(colour){ return colour.name.trim() || '(No colour name)'; }
-
-function refreshColourOutputs(){
-  // Validation warnings + front slot highlight
-  colours.forEach(colour => {
-    SLOT_DEFS.forEach(d => updateSlotUI(colour, d.key));
-    const card = document.getElementById('colour-' + colour.id);
-    if (card) {
-      const warn = card.querySelector('.front-warning');
-      const front = colour.slots.front;
-      const missing = !front.link && front.status !== 'uploading';
-      if (warn) warn.classList.toggle('show', missing);
+function renderColourImages(colour){
+  const card = document.getElementById('colour-' + colour.id);
+  if(!card) return;
+  const countEl = card.querySelector('.colour-count');
+  if(countEl) countEl.textContent = colour.images.length + (colour.images.length===1 ? ' image' : ' images');
+  const container = card.querySelector('.colour-images');
+  if(!colour.images.length){ container.innerHTML = '<div class="empty">No images for this colour yet.</div>'; return; }
+  container.innerHTML = '';
+  colour.images.forEach(img => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = `
+      <img src="${escHtml(img.preview||img.link||'')}" alt="">
+      <div class="meta">
+        <div class="fname">${escHtml(img.name)}</div>
+        <div class="fsize">${fmtSize(img.size)}</div>
+        ${img.link ? `<div class="linkbox"><input readonly value="${escHtml(img.link)}"><button class="btn btn-primary" type="button">Copy</button></div><div class="status ok">✅ Link ready</div>` :
+          img.status==='error' ? `<div class="status err">❌ ${escHtml(img.error||'Failed')}</div>` :
+          `<div class="status wait">⏳ Uploading...</div>`}
+      </div>
+      <button class="btn btn-light" type="button">Remove image</button>`;
+    if(img.link){
+      row.querySelector('.linkbox button').onclick = function(){ copyText(img.link, this); };
     }
+    row.querySelector('.btn-light').onclick = () => {
+      colour.images = colour.images.filter(i=>i.id!==img.id);
+      renderColourImages(colour);
+      refreshColourOutputs();
+    };
+    container.appendChild(row);
   });
+}
 
-  if (!colours.length) {
-    colourPreviewEl.innerHTML = '<div class="empty">No colours yet. Click “Add Colour” above.</div>';
-    colourPlainEl.value = '';
-    return;
-  }
-
-  // Preview table/list
-  colourPreviewEl.innerHTML = colours.map(colour => {
-    const rows = SLOT_DEFS.map(d => {
-      const link = colour.slots[d.key].link;
-      return '<div class="preview-row"><span class="vlabel">' + escHtml(d.csv) + (d.required ? ' <span class="req">*</span>' : '') + '</span>' +
-        (link
-          ? '<span class="vlink">' + escHtml(link) + '</span><button class="btn btn-primary btn-small" type="button" onclick="copyColourLink(\'' + colour.id + '\',\'' + d.key + '\',this)">Copy</button>'
-          : '<span class="vlink empty-link">— not uploaded yet —</span>') +
-        '</div>';
-    }).join('');
-    return '<div class="preview-group"><h3>' + escHtml(colourDisplayName(colour)) +
-      ' <button class="btn btn-light btn-small" type="button" onclick="copyColourRow(\'' + colour.id + '\',this)">Copy row</button></h3>' + rows + '</div>';
-  }).join('');
-
-  // Plain grouped list
-  colourPlainEl.value = colours.map(colour => {
+function colourGroupedText(){
+  return colours.map(colour => {
     const lines = [colourDisplayName(colour)];
-    SLOT_DEFS.forEach(d => { lines.push(d.plain + ': ' + (colour.slots[d.key].link || '')); });
+    colour.images.filter(i=>i.link).forEach(img => lines.push(img.link));
     return lines.join('\n');
   }).join('\n\n');
 }
 
-window.copyColourLink = function(colourId, key, btn){
-  const colour = colours.find(c => c.id === colourId); if (!colour) return;
-  const link = colour.slots[key].link; if (link) copyText(link, btn);
-};
-window.copyColourRow = function(colourId, btn){
-  const colour = colours.find(c => c.id === colourId); if (!colour) return;
-  const row = [colourDisplayName(colour)].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || '')).join('\t');
-  copyText(row, btn);
-};
-
-function colourTableText(){
-  const header = ['Colour'].concat(SLOT_DEFS.map(d => d.csv)).join('\t');
-  const rows = colours.map(colour => [colour.name.trim()].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || '')).join('\t'));
-  return [header].concat(rows).join('\n');
+function refreshColourOutputs(){
+  colourPlainEl.value = colours.length ? colourGroupedText() : '';
 }
 
 document.getElementById('addColourBtn').onclick = () => addColour('');
 document.getElementById('addAnotherColourBtn').onclick = () => addColour('');
 document.getElementById('clearColoursBtn').onclick = () => { colours = []; colourListEl.innerHTML = ''; refreshColourOutputs(); };
-document.getElementById('copyColourAllBtn').onclick = function(){ if (!colours.length) { alert('Please add a colour first.'); return; } copyText(colourTableText(), this); };
-document.getElementById('copyColourPlainBtn').onclick = function(){ if (!colourPlainEl.value) { alert('Please add a colour first.'); return; } copyText(colourPlainEl.value, this); };
+document.getElementById('copyColourAllBtn').onclick = function(){ if(!colours.length){ alert('Please add a colour first.'); return; } const t=colourGroupedText(); if(!t.trim()){ alert('No links yet.'); return; } copyText(t, this); };
+document.getElementById('copyColourPlainBtn').onclick = function(){ if(!colourPlainEl.value){ alert('Please add a colour first.'); return; } copyText(colourPlainEl.value, this); };
 document.getElementById('csvColourBtn').onclick = () => {
-  if (!colours.length) { alert('Please add a colour first.'); return; }
-  const rows = [['Colour'].concat(SLOT_DEFS.map(d => d.csv))];
-  colours.forEach(colour => rows.push([colour.name.trim()].concat(SLOT_DEFS.map(d => colour.slots[d.key].link || ''))));
+  if(!colours.length){ alert('Please add a colour first.'); return; }
+  const rows = [['Colour','Filename','Image Link']];
+  colours.forEach(colour => {
+    colour.images.filter(i=>i.link).forEach(img => rows.push([colour.name.trim(), img.savedName||img.name, img.link]));
+  });
+  if(rows.length===1){ alert('No links yet. Upload images first.'); return; }
   const csv = rows.map(r => r.map(c => '"' + esc(String(c)) + '"').join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
   a.download = 'colour-wise-image-links.csv'; a.click(); URL.revokeObjectURL(a.href);
 };
 
-// Start with one empty colour row so Option 2 is ready to use.
 addColour('');
 showOption(2);
 </script>

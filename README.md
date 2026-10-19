@@ -67,36 +67,45 @@ After deployment on any host, the website automatically uses that host's address
 5. The plain list box also shows one link per line for quick copy-paste into Excel.
 6. **Remove** deletes one row from the list, **Clear All** empties the list.
 
-## Option 2 - Colour-wise Variant Upload (new, at the top of the website)
+## Option 2 - Colour-wise Upload
 
-Use this when one jacket design has many colours, for example Black, Blue, Green.
+Images divided only by colour. Use this when one jacket design has many colours, for example Black, Blue, Green.
 
-1. Open the website and click **Option 2: Colour-wise Variant Upload** (it is selected by default).
+1. Open the website and click **Option 2: Colour-wise Upload** (it is selected by default).
 2. Click **Add Colour**, type only the colour name, for example `Black`.
-3. In that colour row, click each view box and choose one image:
-   - **Front View \*** (required), **Back View**, **Side View**, **Neck View**, **Zoomed view**, **Model Shot View**
-   - Each image uploads at once. When it says **Link ready**, the link is saved in that box.
-   - You can drag & drop an image onto a box, click a box again to replace its image, and copy any one link with its **Copy** button.
-4. Click **Add Another Colour** for the next colour (for example `Blue`) and repeat.
-5. If the Front View is missing for a colour, a gentle warning **"Front View is required"** is shown for that colour and the Front View box is highlighted. The CSV can still be downloaded, but add the Front View before using it for Flipkart/Amazon.
-6. At the end, use any of these:
-   - **Copy All (Colour-wise)** — copies a table separated by tabs (Colour + 6 view links) that you can paste straight into Excel.
-   - **Download CSV (Colour-wise)** — downloads `colour-wise-image-links.csv`.
-   - The preview list and the plain grouped list below show every colour and its 6 links, with a Copy button for each link and for each full row.
+3. In that colour block, drag & drop many images of that colour at once, or click the upload area to browse (multiple files). Each image uploads immediately via `/upload` and shows its thumbnail, filename, link, **Copy** button, and **Remove image** button. The block also shows how many images are in that colour.
+4. Click **Add Another Colour** for the next colour (for example `Blue`) and upload all of its images in the same way. Use **Remove Colour** to delete a whole colour block.
+5. At the end, use any of these:
+   - **Copy All (Colour-wise)** — copies grouped plain text: the colour name on one line, then one link per line under it, with a blank line between colours.
+   - **Download CSV (Colour-wise)** — downloads `colour-wise-image-links.csv` (see format below).
+   - The plain list box on the page shows the same grouped text, with a **Copy This List** button.
+   - Each colour block has a **Copy Links** button that copies only that colour's links, one per line.
 
 ### Colour-wise CSV format
 
 Columns exactly:
 
 ```
-Colour, Front View, Back View, Side View, Neck View, Zoomed view, Model Shot View
+Colour, Filename, Image Link
 ```
 
-One row per colour. Each cell has that view's image link; it is left blank if that view was not uploaded. Example:
+One row per image, grouped/sorted by the colour order entered. Example:
 
 ```
-"Black","https://.../front.jpg","https://.../back.jpg","","","",""
-"Blue","https://.../front2.jpg","","","","",""
+"Black","jacket1.jpg","https://.../jacket1.jpg"
+"Black","jacket2.jpg","https://.../jacket2.jpg"
+"Blue","jacket-blue1.jpg","https://.../jacket-blue1.jpg"
+```
+
+### Grouped plain text format
+
+```
+Black
+https://.../jacket1.jpg
+https://.../jacket2.jpg
+
+Blue
+https://.../jacket-blue1.jpg
 ```
 
 **Option 1 — Single Images** still works as before: upload many images, get one link per image, **Copy All Links**, or **Download CSV** with columns `Filename, Image Link`.
