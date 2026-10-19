@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image to Link Converter — For Amazon & Flipkart Sheets</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f3f5fb;color:#172033;line-height:1.5}
+  header{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:28px 18px 34px;text-align:center}
+  header h1{font-size:28px;margin-bottom:6px}
+  header p{opacity:.92;font-size:15px;max-width:640px;margin:0 auto}
+  .wrap{max-width:980px;margin:-18px auto 40px;padding:0 14px}
+  .card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(20,20,60,.10);padding:20px;margin-bottom:16px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+  .step{background:#eef2ff;border-radius:12px;padding:12px 8px;font-size:14px}
+  .step b{display:block;font-size:20px;color:#4f46e5}
+  @media(max-width:640px){.steps{grid-template-columns:1fr}header h1{font-size:23px}}
+  #drop{border:2px dashed #818cf8;border-radius:16px;padding:34px 14px;text-align:center;background:#eef2ff;cursor:pointer;transition:.2s}
+  #drop:hover,#drop.over{background:#e0e7ff;border-color:#4f46e5}
+  #drop .big{font-size:20px;font-weight:700}
+  #drop .small{color:#555;font-size:14px;margin-top:4px}
+  .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;font-size:14px}
+  .btn-primary{background:#4f46e5;color:#fff}.btn-green{background:#16a34a;color:#fff}
+  .btn-dark{background:#172033;color:#fff}.btn-light{background:#e5e7eb;color:#172033}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .item{display:flex;gap:12px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-top:10px;flex-wrap:wrap}
+  .item img{width:84px;height:84px;object-fit:cover;border-radius:10px;background:#eee;flex-shrink:0}
+  .meta{flex:1;min-width:220px}
+  .fname{font-weight:700;word-break:break-all;font-size:14px}
+  .fsize{color:#666;font-size:12px}
+  .linkbox{display:flex;gap:6px;margin-top:7px}
+  .linkbox input{flex:1;padding:9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;min-width:0}
+  .status{font-size:13px;margin-top:5px}.ok{color:#16a34a}.err{color:#dc2626}.wait{color:#d97706}
+  textarea{width:100%;min-height:130px;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-family:monospace;font-size:13px}
+  label{font-weight:700;display:block;margin-bottom:6px}
+  .warn{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:12px;padding:12px 14px;font-size:14px}
+  .empty{color:#666;text-align:center;padding:16px}
+  footer{text-align:center;color:#777;font-size:13px;padding:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🖼️ Image to Link Converter</h1>
+  <p>Upload your product images and get direct links — ready to paste into your Amazon &amp; Flipkart bulk upload sheets.</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="steps">
+      <div class="step"><b>1</b>Upload images</div>
+      <div class="step"><b>2</b>Copy the links</div>
+      <div class="step"><b>3</b>Paste in Amazon / Flipkart sheet</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="drop" tabindex="0" role="button" aria-label="Upload images">
+      <div class="big">📤 Drag &amp; drop images here</div>
+      <div class="small">or click to browse — JPG, JPEG, PNG, WEBP, GIF • Many images at once</div>
+    </div>
+    <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple hidden>
+
+    <div class="toolbar">
+      <button class="btn btn-primary" id="browseBtn">Choose Images</button>
+      <button class="btn btn-green" id="copyAllBtn" disabled>📋 Copy All Links</button>
+      <button class="btn btn-dark" id="csvBtn" disabled>⬇️ Download CSV (for Bulk Sheet)</button>
+      <button class="btn btn-light" id="clearBtn" disabled>Clear All</button>
+    </div>
+
+    <div id="list"><div class="empty">No images yet. Upload your first image above.</div></div>
+  </div>
+
+  <div class="card">
+    <label for="plainList">Plain list — one link per line (easy to copy into Excel)</label>
+    <textarea id="plainList" readonly placeholder="Your links will appear here, one per line..."></textarea>
+    <div class="toolbar"><button class="btn btn-primary" id="copyPlainBtn" disabled>Copy This List</button></div>
+  </div>
+
+  <div class="warn">
+    <b>Important:</b> If you are running this on your own computer (localhost), the links will look like
+    <code>http://localhost...</code> and Amazon/Flipkart <b>cannot</b> open them.
+    For real bulk sheets, this website must be put on a public host (see README) so links start with a public
+    <code>https://</code> address. Then Amazon &amp; Flipkart can download your images.
+  </div>
+  <footer>Made for Amazon &amp; Flipkart sellers • Links stay in the <b>uploads</b> folder on the server</footer>
+</div>
+
+<script>
+const drop = document.getElementById('drop');
+const input = document.getElementById('fileInput');
+const listEl = document.getElementById('list');
+const plainEl = document.getElementById('plainList');
+const copyAllBtn = document.getElementById('copyAllBtn');
+const csvBtn = document.getElementById('csvBtn');
+const clearBtn = document.getElementById('clearBtn');
+const copyPlainBtn = document.getElementById('copyPlainBtn');
+let items = []; // {id, name, size, link, status}
+
+document.getElementById('browseBtn').onclick = () => input.click();
+drop.onclick = () => input.click();
+drop.onkeydown = e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click();} };
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+input.addEventListener('change', () => { handleFiles(input.files); input.value=''; });
+
+function fmtSize(b){ if(b<1024) return b+' B'; if(b<1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(2)+' MB'; }
+function esc(s){ return s.replace(/"/g,'""'); }
+
+function handleFiles(fileList){
+  const files = [...fileList].filter(f=>/\.(jpe?g|png|webp|gif)$/i.test(f.name) || f.type.startsWith('image/'));
+  if(!files.length){ alert('Please choose image files: JPG, PNG, WEBP or GIF'); return; }
+  files.forEach(f => uploadOne(f));
+}
+
+async function uploadOne(file){
+  const id = Math.random().toString(36).slice(2);
+  const item = {id, name:file.name, size:file.size, link:'', status:'Uploading...', preview:URL.createObjectURL(file)};
+  items.push(item); render();
+  const fd = new FormData(); fd.append('file', file);
+  try{
+    const res = await fetch('/upload', {method:'POST', body:fd});
+    const data = await res.json();
+    if(!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
+    item.link = data.files[0].link; item.savedName = data.files[0].filename; item.status='ok';
+  }catch(err){ item.status='error'; item.error=err.message; }
+  render();
+}
+
+function render(){
+  if(!items.length){ listEl.innerHTML='<div class="empty">No images yet. Upload your first image above.</div>'; }
+  else{
+    listEl.innerHTML = items.map(it=>`
+      <div class="item">
+        <img src="${it.preview||it.link}" alt="">
+        <div class="meta">
+          <div class="fname">${it.name.replace(/</g,'&lt;')}</div>
+          <div class="fsize">${fmtSize(it.size)}</div>
+          ${it.link ? `<div class="linkbox"><input readonly value="${it.link}"><button class="btn btn-primary" onclick="copyLink('${it.id}',this)">Copy</button></div>
+          <div class="status ok">✅ Link ready</div>` :
+          it.status==='error' ? `<div class="status err">❌ ${it.error||'Failed'}</div>` :
+          `<div class="status wait">⏳ Uploading...</div>`}
+        </div>
+        <button class="btn btn-light" onclick="removeItem('${it.id}')">Remove</button>
+      </div>`).join('');
+  }
+  const links = items.filter(i=>i.link);
+  plainEl.value = links.map(i=>i.link).join('\n');
+  const has = links.length>0;
+  copyAllBtn.disabled = csvBtn.disabled = copyPlainBtn.disabled = !has;
+  clearBtn.disabled = items.length===0;
+}
+
+window.copyLink = async (id, btn) => {
+  const it = items.find(i=>i.id===id); if(!it) return;
+  await navigator.clipboard.writeText(it.link);
+  const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
+};
+window.removeItem = id => { items = items.filter(i=>i.id!==id); render(); };
+clearBtn.onclick = () => { items=[]; render(); };
+copyAllBtn.onclick = async e => { await navigator.clipboard.writeText(items.filter(i=>i.link).map(i=>i.link).join('\n')); flash(e.target); };
+copyPlainBtn.onclick = async e => { await navigator.clipboard.writeText(plainEl.value); flash(e.target); };
+function flash(btn){ const o=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=o,1200); }
+
+csvBtn.onclick = () => {
+  const rows = [['Filename','Image Link']];
+  items.filter(i=>i.link).forEach(i=>rows.push([i.savedName||i.name, i.link]));
+  const csv = rows.map(r=>r.map(c=>`"${esc(String(c))}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='image-links.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+render();
+</script>
+</body>
+</html>
