@@ -56,6 +56,13 @@
   .colour-drop:hover,.colour-drop.over{background:#e0e7ff;border-color:#4f46e5}
   .colour-drop .big{font-size:17px;font-weight:700}
   .colour-drop .small{color:#555;font-size:13px;margin-top:3px}
+  .pos{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;border-radius:50%;background:#4f46e5;color:#fff;font-weight:800;font-size:14px;flex-shrink:0;padding:0 6px}
+  .reorder{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .reorder .btn{min-width:44px;min-height:40px;font-size:16px}
+  .item[draggable="true"]{cursor:grab}
+  .item.dragging{opacity:.45;border-color:#4f46e5}
+  .item.drag-over{outline:2px dashed #4f46e5;outline-offset:2px}
+  .help-order{background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:9px 11px;font-size:13px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -93,6 +100,7 @@
     <div class="card">
       <h2 style="font-size:20px;margin-bottom:6px">Colour-wise Upload</h2>
       <p class="hint">Images divided only by colour. Add a colour like <b>Black</b>, upload all images of that colour together, then add another colour like <b>Blue</b> and upload its images. Each image gets its own link, grouped under its colour.</p>
+      <p class="help-order">🔀 <b>Change order:</b> Use ◀ ▶ buttons or drag an image, or press <b>Shuffle this colour</b> — links and CSV will follow this order. The number 1, 2, 3… on each image = Image 1, Image 2… in the CSV row.</p>
 
       <div class="toolbar">
         <button class="btn btn-primary" id="addColourBtn">+ Add Colour</button>
@@ -130,7 +138,9 @@
         <button class="btn btn-green" id="copyAllBtn" disabled>📋 Copy All Links</button>
         <button class="btn btn-dark" id="csvBtn" disabled>⬇️ Download CSV (for Bulk Sheet)</button>
         <button class="btn btn-light" id="clearBtn" disabled>Clear All</button>
+        <button class="btn btn-dark" id="shuffleBtn" disabled>🔀 Shuffle All</button>
       </div>
+      <p class="help-order">🔀 <b>Change order:</b> Use ↑ Move Up / ↓ Move Down buttons or drag an image, or press <b>Shuffle All</b> — links, plain list and CSV will follow this order.</p>
 
       <div id="list"><div class="empty">No images yet. Upload your first image above.</div></div>
     </div>
@@ -165,6 +175,25 @@ window.showOption = function(n){
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function flash(btn){ if(!btn) return; const o=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=o,1200); }
 async function copyText(text, btn){ await navigator.clipboard.writeText(text); flash(btn); }
+// Pure reorder helpers (used by both options; order of arrays = order of all outputs)
+function moveInArray(arr, idx, dir){
+  const newIdx = idx + dir;
+  if(idx < 0 || idx >= arr.length || newIdx < 0 || newIdx >= arr.length) return false;
+  const tmp = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = tmp;
+  return true;
+}
+function shuffleArray(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+function moveItemById(arr, id, dir){
+  const idx = arr.findIndex(x => x.id === id);
+  if(idx < 0) return false;
+  return moveInArray(arr, idx, dir);
+}
 
 // ================= OPTION 1: Single Images (existing behaviour) =================
 const drop = document.getElementById('drop');
@@ -175,6 +204,7 @@ const copyAllBtn = document.getElementById('copyAllBtn');
 const csvBtn = document.getElementById('csvBtn');
 const clearBtn = document.getElementById('clearBtn');
 const copyPlainBtn = document.getElementById('copyPlainBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
 let items = [];
 
 document.getElementById('browseBtn').onclick = () => input.click();
@@ -211,16 +241,22 @@ async function uploadOne(file){
 function render(){
   if(!items.length){ listEl.innerHTML='<div class="empty">No images yet. Upload your first image above.</div>'; }
   else{
-    listEl.innerHTML = items.map(it=>`
-      <div class="item">
+    listEl.innerHTML = items.map((it, idx)=>`
+      <div class="item" draggable="true" data-id="${it.id}"
+        ondragstart="dragStartOpt1(event,'${it.id}')" ondragover="dragOverOpt1(event)" ondrop="dropOpt1(event,'${it.id}')" ondragend="dragEndOpt1(event)">
+        <span class="pos" title="Position">${idx+1}</span>
         <img src="${it.preview||it.link}" alt="">
         <div class="meta">
           <div class="fname">${escHtml(it.name)}</div>
-          <div class="fsize">${fmtSize(it.size)}</div>
+          <div class="fsize">${fmtSize(it.size)} • Position ${idx+1}</div>
           ${it.link ? `<div class="linkbox"><input readonly value="${escHtml(it.link)}"><button class="btn btn-primary" onclick="copyLink('${it.id}',this)">Copy</button></div>
           <div class="status ok">✅ Link ready</div>` :
           it.status==='error' ? `<div class="status err">❌ ${escHtml(it.error||'Failed')}</div>` :
           `<div class="status wait">⏳ Uploading...</div>`}
+          <div class="reorder">
+            <button class="btn btn-light" type="button" ${idx===0?'disabled':''} onclick="moveOpt1('${it.id}',-1)" aria-label="Move up">↑ Move Up</button>
+            <button class="btn btn-light" type="button" ${idx===items.length-1?'disabled':''} onclick="moveOpt1('${it.id}',1)" aria-label="Move down">↓ Move Down</button>
+          </div>
         </div>
         <button class="btn btn-light" onclick="removeItem('${it.id}')">Remove</button>
       </div>`).join('');
@@ -230,6 +266,7 @@ function render(){
   const has = links.length>0;
   copyAllBtn.disabled = csvBtn.disabled = copyPlainBtn.disabled = !has;
   clearBtn.disabled = items.length===0;
+  shuffleBtn.disabled = items.length < 2;
 }
 
 window.copyLink = async (id, btn) => {
@@ -238,6 +275,20 @@ window.copyLink = async (id, btn) => {
   const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
 };
 window.removeItem = id => { items = items.filter(i=>i.id!==id); render(); };
+window.moveOpt1 = (id, dir) => { if(moveItemById(items, id, dir)) render(); };
+let dragIdOpt1 = null;
+window.dragStartOpt1 = (e, id) => { dragIdOpt1 = id; e.currentTarget.classList.add('dragging'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', id); }catch(_){} };
+window.dragOverOpt1 = e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+window.dropOpt1 = (e, targetId) => {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  const srcId = dragIdOpt1 || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+  if(!srcId || srcId === targetId) return;
+  const from = items.findIndex(x=>x.id===srcId), to = items.findIndex(x=>x.id===targetId);
+  if(from<0||to<0) return;
+  const moved = items.splice(from,1)[0]; items.splice(to,0,moved); dragIdOpt1=null; render();
+};
+window.dragEndOpt1 = e => { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.item.drag-over').forEach(el=>el.classList.remove('drag-over')); };
+shuffleBtn.onclick = () => { shuffleArray(items); render(); };
 clearBtn.onclick = () => { items=[]; render(); };
 copyAllBtn.onclick = async e => { await navigator.clipboard.writeText(items.filter(i=>i.link).map(i=>i.link).join('\n')); flash(e.target); };
 copyPlainBtn.onclick = async e => { await navigator.clipboard.writeText(plainEl.value); flash(e.target); };
@@ -278,6 +329,7 @@ function buildColourCard(colour){
         <input class="colour-name" type="text" placeholder="e.g. Black" value="${escHtml(colour.name)}">
       </div>
       <span class="colour-count">0 images</span>
+      <button class="btn btn-dark btn-small" type="button" data-action="shuffle-colour">🔀 Shuffle this colour</button>
       <button class="btn btn-green btn-small" type="button" data-action="copy-colour">Copy Links</button>
       <button class="btn btn-light" type="button" data-action="remove-colour">Remove Colour</button>
     </div>
@@ -286,6 +338,7 @@ function buildColourCard(colour){
       <div class="small">or click to browse — JPG, JPEG, PNG, WEBP, GIF • Many images at once, all for this colour</div>
     </div>
     <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple hidden>
+    <p class="help-order">Use ◀ ▶ buttons or drag an image to change order — links and CSV will follow this order. Number 1 = Image 1, 2 = Image 2, and so on.</p>
     <div class="colour-images"><div class="empty">No images for this colour yet.</div></div>`;
 
   const nameInput = card.querySelector('.colour-name');
@@ -294,6 +347,12 @@ function buildColourCard(colour){
   card.querySelector('[data-action="remove-colour"]').onclick = () => {
     colours = colours.filter(c => c.id !== colour.id);
     card.remove();
+    refreshColourOutputs();
+  };
+  card.querySelector('[data-action="shuffle-colour"]').onclick = function(){
+    if(colour.images.length < 2){ alert('Add at least 2 images to shuffle this colour.'); return; }
+    shuffleArray(colour.images);
+    renderColourImages(colour);
     refreshColourOutputs();
   };
   card.querySelector('[data-action="copy-colour"]').onclick = function(){
@@ -344,19 +403,48 @@ function renderColourImages(colour){
   const container = card.querySelector('.colour-images');
   if(!colour.images.length){ container.innerHTML = '<div class="empty">No images for this colour yet.</div>'; return; }
   container.innerHTML = '';
-  colour.images.forEach(img => {
+  colour.images.forEach((img, idx) => {
     const row = document.createElement('div');
     row.className = 'item';
+    row.draggable = true;
+    row.dataset.imgId = img.id;
     row.innerHTML = `
+      <span class="pos" title="Position in CSV row">${idx+1}</span>
       <img src="${escHtml(img.preview||img.link||'')}" alt="">
       <div class="meta">
         <div class="fname">${escHtml(img.name)}</div>
-        <div class="fsize">${fmtSize(img.size)}</div>
+        <div class="fsize">${fmtSize(img.size)} • Image ${idx+1} in CSV row</div>
         ${img.link ? `<div class="linkbox"><input readonly value="${escHtml(img.link)}"><button class="btn btn-primary" type="button">Copy</button></div><div class="status ok">✅ Link ready</div>` :
           img.status==='error' ? `<div class="status err">❌ ${escHtml(img.error||'Failed')}</div>` :
           `<div class="status wait">⏳ Uploading...</div>`}
+        <div class="reorder">
+          <button class="btn btn-light" type="button" data-move="-1" ${idx===0?'disabled':''} aria-label="Move earlier">◀ Move Earlier</button>
+          <button class="btn btn-light" type="button" data-move="1" ${idx===colour.images.length-1?'disabled':''} aria-label="Move later">Move Later ▶</button>
+        </div>
       </div>
       <button class="btn btn-light" type="button">Remove image</button>`;
+    row.querySelectorAll('[data-move]').forEach(btn=>{
+      btn.onclick = () => {
+        if(moveItemById(colour.images, img.id, Number(btn.dataset.move))){
+          renderColourImages(colour);
+          refreshColourOutputs();
+        }
+      };
+    });
+    // HTML5 drag-to-reorder within this colour only
+    row.addEventListener('dragstart', e=>{ row.classList.add('dragging'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', img.id); }catch(_){} });
+    row.addEventListener('dragend', ()=>{ row.classList.remove('dragging'); container.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over')); });
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', ()=>row.classList.remove('drag-over'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault(); row.classList.remove('drag-over');
+      let srcId=''; try{ srcId=e.dataTransfer.getData('text/plain'); }catch(_){}
+      if(!srcId || srcId===img.id) return;
+      const from=colour.images.findIndex(x=>x.id===srcId), to=colour.images.findIndex(x=>x.id===img.id);
+      if(from<0||to<0) return;
+      const moved=colour.images.splice(from,1)[0]; colour.images.splice(to,0,moved);
+      renderColourImages(colour); refreshColourOutputs();
+    });
     if(img.link){
       row.querySelector('.linkbox button').onclick = function(){ copyText(img.link, this); };
     }

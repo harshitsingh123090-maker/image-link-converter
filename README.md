@@ -121,3 +121,22 @@ Each colour block's **Copy Links** copies only that colour's links, tab-separate
 
 ## Zip of this project
 A ready zip is at `/workspace/image-link-converter.zip` (on the computer where this was built) — you can send that zip to a developer or upload it to your host.
+
+## Reorder / Shuffle images (change link order)
+
+After uploading, you can change the order of images. **All outputs follow the new order** — no need to upload again, it only rearranges the list on the page.
+
+### Option 2 — Colour-wise (main use)
+- Each image shows a big number badge **1, 2, 3…** — that number is its position: `1 = Image 1`, `2 = Image 2`, etc. in the CSV row for that colour.
+- **◀ Move Earlier / Move Later ▶** buttons move one image one step left/right.
+- **Drag** an image card onto another image in the same colour to move it there.
+- **🔀 Shuffle this colour** (top of each colour block) randomizes that colour's images in one click.
+- After reordering, **Copy All (Colour-wise)**, the row list, per-colour **Copy Links**, and **Download CSV (Colour-wise)** all use the new order — e.g. if you move an image to position 1, its link becomes `Image 1` in that colour's CSV row.
+
+### Option 1 — Single Images
+- Each item shows its position number.
+- **↑ Move Up / ↓ Move Down** buttons, or drag an item, to reorder.
+- **🔀 Shuffle All** randomizes all single images.
+- **Copy All Links**, the plain list (one link per line), and **Download CSV** (`Filename, Image Link`) all follow the new order.
+
+Tip: Upload all images first, then arrange them in the exact order you want for Amazon / Flipkart, then copy / download — the links will come out in that order.
