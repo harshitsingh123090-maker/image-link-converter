@@ -76,37 +76,41 @@ Images divided only by colour. Use this when one jacket design has many colours,
 3. In that colour block, drag & drop many images of that colour at once, or click the upload area to browse (multiple files). Each image uploads immediately via `/upload` and shows its thumbnail, filename, link, **Copy** button, and **Remove image** button. The block also shows how many images are in that colour.
 4. Click **Add Another Colour** for the next colour (for example `Blue`) and upload all of its images in the same way. Use **Remove Colour** to delete a whole colour block.
 5. At the end, use any of these:
-   - **Copy All (Colour-wise)** — copies grouped plain text: the colour name on one line, then one link per line under it, with a blank line between colours.
-   - **Download CSV (Colour-wise)** — downloads `colour-wise-image-links.csv` (see format below).
-   - The plain list box on the page shows the same grouped text, with a **Copy This List** button.
-   - Each colour block has a **Copy Links** button that copies only that colour's links, one per line.
+   - **Copy All (Colour-wise)** — copies tab-separated rows ready to paste into Excel / Flipkart / Amazon: first cell is the Colour, then its links side-by-side across columns in the same row, one colour per line. No header in the copy version (paste-ready).
+   - **Download CSV (Colour-wise)** — downloads `colour-wise-image-links.csv` in the same row form, with a header (see format below).
+   - The row list box on the page (label: "Row list — one colour per row, links side-by-side (paste into sheet)") shows the same row form, with a **Copy This List** button.
+   - Each colour block has a **Copy Links** button that copies only that colour's links, tab-separated in one row, so pasting fills columns across.
 
-### Colour-wise CSV format
+### Colour-wise CSV format (row form)
 
-Columns exactly:
+Links are in ROW form, not column form: **one row per colour**, with that colour's links spread horizontally across columns in the same row. This is so pasting into a Flipkart / Amazon sheet fills one row across. Filenames are not included in this CSV — it is paste-ready links only, in the order the images were uploaded within each colour.
 
-```
-Colour, Filename, Image Link
-```
-
-One row per image, grouped/sorted by the colour order entered. Example:
+Header (dynamic — up to the largest number of images in any colour):
 
 ```
-"Black","jacket1.jpg","https://.../jacket1.jpg"
-"Black","jacket2.jpg","https://.../jacket2.jpg"
-"Blue","jacket-blue1.jpg","https://.../jacket-blue1.jpg"
+Colour,Image 1,Image 2,Image 3,Image 4,Image 5
 ```
 
-### Grouped plain text format
+Example:
 
 ```
-Black
-https://.../jacket1.jpg
-https://.../jacket2.jpg
-
-Blue
-https://.../jacket-blue1.jpg
+Colour,Image 1,Image 2,Image 3,Image 4,Image 5
+White,https://.../95.jpg,https://.../96.jpg,https://.../97.jpg,https://.../98.jpg,https://.../99.jpg
+Green,https://.../100.jpg,https://.../101.jpg,https://.../102.jpg,,
 ```
+
+(In the actual file each cell is quoted, e.g. `"White","https://.../95.jpg",...`. Colours with fewer images have empty cells at the end, as Green does above.)
+
+### Row list / Copy All format (tab-separated, no header)
+
+One colour per line: the colour name, then a TAB, then its links separated by TABs. Pasting this into Excel / Flipkart / Amazon spreads the links across columns in one row:
+
+```
+White<TAB>https://.../95.jpg<TAB>https://.../96.jpg
+Green<TAB>https://.../100.jpg
+```
+
+Each colour block's **Copy Links** copies only that colour's links, tab-separated in one row (no colour name).
 
 **Option 1 — Single Images** still works as before: upload many images, get one link per image, **Copy All Links**, or **Download CSV** with columns `Filename, Image Link`.
 

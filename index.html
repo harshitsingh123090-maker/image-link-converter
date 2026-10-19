@@ -109,10 +109,10 @@
     </div>
 
     <div class="card">
-      <label for="colourPlainList">Plain list — grouped by colour (easy to read and copy)</label>
-      <textarea id="colourPlainList" readonly placeholder="Example:&#10;Black&#10;https://...&#10;https://...&#10;&#10;Blue&#10;https://..."></textarea>
+      <label for="colourPlainList">Row list — one colour per row, links side-by-side (paste into sheet)</label>
+      <textarea id="colourPlainList" readonly placeholder="Example (Colour then links side-by-side, tab-separated):&#10;White&#9;https://.../1.jpg&#9;https://.../2.jpg&#10;Green&#9;https://.../3.jpg"></textarea>
       <div class="toolbar"><button class="btn btn-primary" id="copyColourPlainBtn">Copy This List</button></div>
-      <p class="hint"><b>Copy All (Colour-wise)</b> copies the same grouped list: colour name on one line, then one link per line under it, with a blank line between colours. <b>Download CSV (Colour-wise)</b> gives columns: Colour, Filename, Image Link — one row per image.</p>
+      <p class="hint"><b>Copy All (Colour-wise)</b> copies tab-separated rows ready to paste into Excel / Flipkart / Amazon sheet: first cell is the Colour, then its links side-by-side across columns in the same row, one colour per line (no header). <b>Download CSV (Colour-wise)</b> gives the same row form with a header: Colour, Image 1, Image 2, … — one row per colour. Each colour block's <b>Copy Links</b> copies only that colour's links tab-separated in one row.</p>
     </div>
   </div>
 
@@ -299,7 +299,7 @@ function buildColourCard(colour){
   card.querySelector('[data-action="copy-colour"]').onclick = function(){
     const links = colour.images.filter(i=>i.link).map(i=>i.link);
     if(!links.length){ alert('No links yet for this colour.'); return; }
-    copyText(links.join('\n'), this);
+    copyText(links.join('\t'), this);
   };
 
   const dropArea = card.querySelector('.colour-drop');
@@ -370,11 +370,12 @@ function renderColourImages(colour){
 }
 
 function colourGroupedText(){
+  // Row form: one colour per line, Colour <TAB> link1 <TAB> link2 ...
+  // Pasting this into Excel / Flipkart / Amazon spreads links across columns in one row.
   return colours.map(colour => {
-    const lines = [colourDisplayName(colour)];
-    colour.images.filter(i=>i.link).forEach(img => lines.push(img.link));
-    return lines.join('\n');
-  }).join('\n\n');
+    const links = colour.images.filter(i=>i.link).map(img => img.link);
+    return [colourDisplayName(colour), ...links].join('\t');
+  }).join('\n');
 }
 
 function refreshColourOutputs(){
@@ -388,11 +389,15 @@ document.getElementById('copyColourAllBtn').onclick = function(){ if(!colours.le
 document.getElementById('copyColourPlainBtn').onclick = function(){ if(!colourPlainEl.value){ alert('Please add a colour first.'); return; } copyText(colourPlainEl.value, this); };
 document.getElementById('csvColourBtn').onclick = () => {
   if(!colours.length){ alert('Please add a colour first.'); return; }
-  const rows = [['Colour','Filename','Image Link']];
-  colours.forEach(colour => {
-    colour.images.filter(i=>i.link).forEach(img => rows.push([colour.name.trim(), img.savedName||img.name, img.link]));
-  });
-  if(rows.length===1){ alert('No links yet. Upload images first.'); return; }
+  // Row form: ONE ROW PER COLOUR, links spread horizontally across Image 1, Image 2, ...
+  const perColour = colours
+    .map(colour => ({ name: colour.name.trim(), links: colour.images.filter(i=>i.link).map(img => img.link) }))
+    .filter(c => c.links.length);
+  const maxLinks = perColour.reduce((m, c) => Math.max(m, c.links.length), 0);
+  if(!maxLinks){ alert('No links yet. Upload images first.'); return; }
+  const header = ['Colour', ...Array.from({length: maxLinks}, (_, i) => 'Image ' + (i + 1))];
+  const rows = [header];
+  perColour.forEach(c => rows.push([c.name, ...c.links, ...Array(maxLinks - c.links.length).fill('')]));
   const csv = rows.map(r => r.map(c => '"' + esc(String(c)) + '"').join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
