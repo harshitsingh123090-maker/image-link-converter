@@ -5,7 +5,7 @@ Upload product images → get a direct link for each image → paste the links i
 ## Files in this project
 - `index.html` — the website page (what you see in the browser)
 - `server.py` — the small server program (Python only, nothing to install)
-- `uploads/` — uploaded images are saved here
+- `uploads/` — uploaded images are saved here only when running WITHOUT an ImgBB key (local mode)
 
 ## How to run on your own computer
 
@@ -50,7 +50,27 @@ After that one-time setup, you just open your public website, upload images, and
 6. Render will give you a public address like `https://image-link-converter.onrender.com`
 7. Open that address, upload images, copy the `https://...` links — paste them in your Amazon / Flipkart sheet.
 
-Note: On free plans, images/files can be deleted when the service restarts. For permanent image storage for a large catalogue, use a paid disk on Render, or a VPS, or an image host — see "Good to know" below.
+Note: On free plans, files saved on the server are deleted when the service sleeps/restarts. **So on Render, set up ImgBB (next section) — then every link is permanent.**
+
+## ⭐ Permanent links with ImgBB (recommended for Render / any free host)
+
+When the environment variable `IMGBB_API_KEY` is set, every uploaded image is sent to **ImgBB** (free image hosting, no expiry) and the website returns the direct ImgBB link (like `https://i.ibb.co/xxxxx/Black_Jacket.jpg`). These links never break when Render sleeps, restarts or redeploys. The image is uploaded as-is (no resizing by this website).
+
+1. Create a free account at **imgbb.com**.
+2. Open **https://api.imgbb.com/** (while logged in) and click **Get API key**. Copy the key.
+3. On **render.com** → open your `image-link-converter` service → **Environment** (left menu) → **Add Environment Variable**:
+   - **Key:** `IMGBB_API_KEY`
+   - **Value:** your ImgBB API key
+4. Click **Save Changes** (Render redeploys automatically, ~2 minutes).
+5. Upload images again on your website — new links will start with `https://i.ibb.co/...`. Links from before ImgBB (`.../images/...`) that already broke must be re-uploaded.
+
+Keep your API key private — never put it in GitHub files. The server never shows the key in links, responses or logs.
+
+Without `IMGBB_API_KEY` the server works as before (saves to the `uploads/` folder) — fine for testing on your own computer:
+```
+IMGBB_API_KEY=your_key_here python3 server.py
+```
+If ImgBB rejects an upload (wrong key, no internet), the website shows the error for that image instead of a link.
 
 ### Option B — Railway / PythonAnywhere / any VPS
 - **Railway (railway.app):** New Project → Deploy from GitHub → Start command: `python3 server.py`
@@ -116,7 +136,7 @@ Each colour block's **Copy Links** copies only that colour's links, tab-separate
 
 ## Good to know / limitations
 - This is a simple, free tool. There is no login/password — anyone who knows your public website address can upload. Do not share the address publicly if that matters to you.
-- Free hosting usually sleeps or restarts, and files in `uploads/` may not be permanent there. If you need links that must stay alive for months, use paid hosting with a persistent disk, or upload images to a dedicated image/CDN storage and use those links.
+- Free hosting sleeps/restarts and deletes files in `uploads/`. Set `IMGBB_API_KEY` (see the ImgBB section) so images are stored permanently on ImgBB.
 - Amazon/Flipkart may also have their own image rules (white background, minimum size like 1000px, etc.) — this tool only creates the link, it does not edit the photo.
 
 ## Zip of this project
