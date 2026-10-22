@@ -7,7 +7,7 @@ import os
 import re
 import json
 import uuid
-import base64
+import time
 import mimetypes
 import urllib.request
 import urllib.error
@@ -22,7 +22,9 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB per request safety limit
 
 # ImgBB permanent storage (used when IMGBB_API_KEY is set, e.g. on Render)
 IMGBB_UPLOAD_URL = os.environ.get("IMGBB_UPLOAD_URL", "https://api.imgbb.com/1/upload")
-IMGBB_TIMEOUT = 60  # seconds per image
+IMGBB_TIMEOUT = 180  # seconds per attempt (big 7-9 MB images need time)
+IMGBB_ATTEMPTS = 3  # total tries per image
+IMGBB_BACKOFF = (2, 5)  # seconds to wait before retry 2 and retry 3
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -31,22 +33,37 @@ def imgbb_key():
     return (os.environ.get("IMGBB_API_KEY") or "").strip()
 
 
-def upload_to_imgbb(data, original_name, key):
-    """Upload bytes to ImgBB (permanent, no expiration). Returns (link, filename) or raises RuntimeError."""
-    stem, _ext = sanitize_filename(original_name)
-    payload = urlencode({
-        "image": base64.b64encode(data).decode("ascii"),
-        "name": stem,
-    }).encode("ascii")
-    url = IMGBB_UPLOAD_URL + ("&" if "?" in IMGBB_UPLOAD_URL else "?") + urlencode({"key": key})
+class _ImgbbError(RuntimeError):
+    def __init__(self, msg, retryable):
+        super().__init__(msg)
+        self.retryable = retryable
+
+
+def _imgbb_multipart(data, original_name, stem):
+    """Build a multipart/form-data body: binary 'image' file field + 'name' field (no base64)."""
+    boundary = "----ImageLinkConverter" + uuid.uuid4().hex
+    ctype = mimetypes.guess_type(original_name or "")[0] or "application/octet-stream"
+    safe_fn = (os.path.basename(original_name or "image") or "image").replace('"', "").replace("\r", "").replace("\n", "")
+    parts = [
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\n{stem}\r\n".encode("utf-8"),
+        (f"--{boundary}\r\nContent-Disposition: form-data; name=\"image\"; filename=\"{safe_fn}\"\r\n"
+         f"Content-Type: {ctype}\r\n\r\n").encode("utf-8"),
+        data,
+        f"\r\n--{boundary}--\r\n".encode("ascii"),
+    ]
+    return b"".join(parts), f"multipart/form-data; boundary={boundary}"
+
+
+def _imgbb_attempt(url, body, content_type):
     req = urllib.request.Request(
-        url, data=payload, method="POST",
-        headers={"Content-Type": "application/x-www-form-urlencoded",
+        url, data=body, method="POST",
+        headers={"Content-Type": content_type,
+                 "Content-Length": str(len(body)),
                  "User-Agent": "ImageLinkConverter/1.0"},
     )
     try:
         with urllib.request.urlopen(req, timeout=IMGBB_TIMEOUT) as resp:
-            raw = resp.read()
+            return resp.read()
     except urllib.error.HTTPError as e:
         msg = f"HTTP {e.code}"
         try:
@@ -56,11 +73,32 @@ def upload_to_imgbb(data, original_name, key):
                 msg += f": {detail}"
         except Exception:
             pass
-        raise RuntimeError(f"ImgBB upload failed ({msg})")
+        # 5xx / 429 are temporary on ImgBB's side -> retry. Other 4xx (e.g. invalid key) -> don't.
+        raise _ImgbbError(f"ImgBB upload failed ({msg})", retryable=(e.code >= 500 or e.code == 429))
     except urllib.error.URLError as e:
-        raise RuntimeError(f"ImgBB upload failed (could not connect: {getattr(e, 'reason', e)})")
-    except Exception as e:  # timeout etc.
-        raise RuntimeError(f"ImgBB upload failed ({type(e).__name__})")
+        raise _ImgbbError(f"ImgBB upload failed (could not connect: {getattr(e, 'reason', e)})", retryable=True)
+    except Exception as e:  # socket timeout, connection reset etc.
+        detail = str(e) or type(e).__name__
+        raise _ImgbbError(f"ImgBB upload failed ({detail})", retryable=True)
+
+
+def upload_to_imgbb(data, original_name, key):
+    """Upload bytes to ImgBB (permanent, no expiration). Returns (link, filename) or raises RuntimeError.
+    Sends the image as binary multipart/form-data and retries temporary failures with backoff."""
+    stem, _ext = sanitize_filename(original_name)
+    body, content_type = _imgbb_multipart(data, original_name, stem)
+    url = IMGBB_UPLOAD_URL + ("&" if "?" in IMGBB_UPLOAD_URL else "?") + urlencode({"key": key})
+    raw = None
+    for attempt in range(IMGBB_ATTEMPTS):
+        try:
+            raw = _imgbb_attempt(url, body, content_type)
+            break
+        except _ImgbbError as e:
+            if not e.retryable or attempt == IMGBB_ATTEMPTS - 1:
+                raise RuntimeError(str(e))
+            wait = IMGBB_BACKOFF[min(attempt, len(IMGBB_BACKOFF) - 1)]
+            print(f"ImgBB attempt {attempt + 1} failed for {stem}; retrying in {wait}s")
+            time.sleep(wait)
     try:
         result = json.loads(raw.decode("utf-8"))
         info = result["data"]

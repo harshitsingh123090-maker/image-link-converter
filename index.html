@@ -105,6 +105,7 @@
       <div class="toolbar">
         <button class="btn btn-primary" id="addColourBtn">+ Add Colour</button>
         <button class="btn btn-green" id="copyColourAllBtn">📋 Copy All (Colour-wise)</button>
+        <button class="btn btn-primary" id="retryColourFailedBtn" hidden>🔁 Retry all failed</button>
         <button class="btn btn-dark" id="csvColourBtn">⬇️ Download CSV (Colour-wise)</button>
         <button class="btn btn-light" id="clearColoursBtn">Clear All Colours</button>
       </div>
@@ -136,6 +137,7 @@
       <div class="toolbar">
         <button class="btn btn-primary" id="browseBtn">Choose Images</button>
         <button class="btn btn-green" id="copyAllBtn" disabled>📋 Copy All Links</button>
+        <button class="btn btn-primary" id="retryAllBtn" hidden>🔁 Retry all failed</button>
         <button class="btn btn-dark" id="csvBtn" disabled>⬇️ Download CSV (for Bulk Sheet)</button>
         <button class="btn btn-light" id="clearBtn" disabled>Clear All</button>
         <button class="btn btn-dark" id="shuffleBtn" disabled>🔀 Shuffle All</button>
@@ -195,6 +197,17 @@ function moveItemById(arr, id, dir){
   return moveInArray(arr, idx, dir);
 }
 
+// Shared: POST one File to /upload, returns {link, filename} or throws
+async function postImage(file){
+  const fd = new FormData(); fd.append('file', file);
+  let res, data;
+  try{ res = await fetch('/upload', {method:'POST', body:fd}); }
+  catch(_){ throw new Error('Network error — check internet and press Retry'); }
+  try{ data = await res.json(); }catch(_){ data = {}; }
+  if(!res.ok || !data.files || !data.files[0]) throw new Error(data.error || ('Upload failed (HTTP ' + res.status + ')'));
+  return data.files[0];
+}
+
 // ================= OPTION 1: Single Images (existing behaviour) =================
 const drop = document.getElementById('drop');
 const input = document.getElementById('fileInput');
@@ -205,6 +218,7 @@ const csvBtn = document.getElementById('csvBtn');
 const clearBtn = document.getElementById('clearBtn');
 const copyPlainBtn = document.getElementById('copyPlainBtn');
 const shuffleBtn = document.getElementById('shuffleBtn');
+const retryAllBtn = document.getElementById('retryAllBtn');
 let items = [];
 
 document.getElementById('browseBtn').onclick = () => input.click();
@@ -226,14 +240,17 @@ function handleFiles(fileList){
 
 async function uploadOne(file){
   const id = Math.random().toString(36).slice(2);
-  const item = {id, name:file.name, size:file.size, link:'', status:'Uploading...', preview:URL.createObjectURL(file)};
+  const item = {id, name:file.name, size:file.size, link:'', status:'Uploading...', preview:URL.createObjectURL(file), file};
   items.push(item); render();
-  const fd = new FormData(); fd.append('file', file);
+  await sendOpt1(item);
+}
+
+// Upload (or re-upload) one Option 1 item using the File kept on the item
+async function sendOpt1(item){
+  item.status='Uploading...'; item.error=''; render();
   try{
-    const res = await fetch('/upload', {method:'POST', body:fd});
-    const data = await res.json();
-    if(!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
-    item.link = data.files[0].link; item.savedName = data.files[0].filename; item.status='ok';
+    const r = await postImage(item.file);
+    item.link = r.link; item.savedName = r.filename; item.status='ok';
   }catch(err){ item.status='error'; item.error=err.message; }
   render();
 }
@@ -251,7 +268,8 @@ function render(){
           <div class="fsize">${fmtSize(it.size)} • Position ${idx+1}</div>
           ${it.link ? `<div class="linkbox"><input readonly value="${escHtml(it.link)}"><button class="btn btn-primary" onclick="copyLink('${it.id}',this)">Copy</button></div>
           <div class="status ok">✅ Link ready</div>` :
-          it.status==='error' ? `<div class="status err">❌ ${escHtml(it.error||'Failed')}</div>` :
+          it.status==='error' ? `<div class="status err">❌ ${escHtml(it.error||'Failed')}</div>
+          <button class="btn btn-primary btn-small" type="button" style="margin-top:6px" onclick="retryOpt1('${it.id}')">🔁 Retry</button>` :
           `<div class="status wait">⏳ Uploading...</div>`}
           <div class="reorder">
             <button class="btn btn-light" type="button" ${idx===0?'disabled':''} onclick="moveOpt1('${it.id}',-1)" aria-label="Move up">↑ Move Up</button>
@@ -267,6 +285,9 @@ function render(){
   copyAllBtn.disabled = csvBtn.disabled = copyPlainBtn.disabled = !has;
   clearBtn.disabled = items.length===0;
   shuffleBtn.disabled = items.length < 2;
+  const failed = items.filter(i=>i.status==='error').length;
+  retryAllBtn.hidden = failed===0;
+  retryAllBtn.textContent = '🔁 Retry all failed (' + failed + ')';
 }
 
 window.copyLink = async (id, btn) => {
@@ -274,6 +295,8 @@ window.copyLink = async (id, btn) => {
   await navigator.clipboard.writeText(it.link);
   const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
 };
+window.retryOpt1 = id => { const it = items.find(i=>i.id===id); if(it && it.file && it.status==='error') sendOpt1(it); };
+retryAllBtn.onclick = () => items.filter(i=>i.status==='error' && i.file).forEach(i=>sendOpt1(i));
 window.removeItem = id => { items = items.filter(i=>i.id!==id); render(); };
 window.moveOpt1 = (id, dir) => { if(moveItemById(items, id, dir)) render(); };
 let dragIdOpt1 = null;
@@ -380,16 +403,18 @@ function handleColourFiles(colour, fileList){
 }
 
 async function uploadColourImage(colour, file){
-  const img = {id: Math.random().toString(36).slice(2), name:file.name, savedName:'', size:file.size, link:'', status:'uploading', error:'', preview:URL.createObjectURL(file)};
+  const img = {id: Math.random().toString(36).slice(2), name:file.name, savedName:'', size:file.size, link:'', status:'uploading', error:'', preview:URL.createObjectURL(file), file};
   colour.images.push(img);
-  renderColourImages(colour);
-  refreshColourOutputs();
-  const fd = new FormData(); fd.append('file', file);
+  await sendColourImage(colour, img);
+}
+
+// Upload (or re-upload) one colour image using the File kept on it
+async function sendColourImage(colour, img){
+  img.status='uploading'; img.error='';
+  renderColourImages(colour); refreshColourOutputs();
   try{
-    const res = await fetch('/upload', {method:'POST', body:fd});
-    const data = await res.json();
-    if(!res.ok || !data.files || !data.files[0]) throw new Error(data.error || 'Upload failed');
-    img.link = data.files[0].link; img.savedName = data.files[0].filename; img.status='ok';
+    const r = await postImage(img.file);
+    img.link = r.link; img.savedName = r.filename; img.status='ok';
   }catch(err){ img.status='error'; img.error=err.message; }
   renderColourImages(colour);
   refreshColourOutputs();
@@ -415,14 +440,14 @@ function renderColourImages(colour){
         <div class="fname">${escHtml(img.name)}</div>
         <div class="fsize">${fmtSize(img.size)} • Image ${idx+1} in CSV row</div>
         ${img.link ? `<div class="linkbox"><input readonly value="${escHtml(img.link)}"><button class="btn btn-primary" type="button">Copy</button></div><div class="status ok">✅ Link ready</div>` :
-          img.status==='error' ? `<div class="status err">❌ ${escHtml(img.error||'Failed')}</div>` :
+          img.status==='error' ? `<div class="status err">❌ ${escHtml(img.error||'Failed')}</div><button class="btn btn-primary btn-small" type="button" data-action="retry-image" style="margin-top:6px">🔁 Retry</button>` :
           `<div class="status wait">⏳ Uploading...</div>`}
         <div class="reorder">
           <button class="btn btn-light" type="button" data-move="-1" ${idx===0?'disabled':''} aria-label="Move earlier">◀ Move Earlier</button>
           <button class="btn btn-light" type="button" data-move="1" ${idx===colour.images.length-1?'disabled':''} aria-label="Move later">Move Later ▶</button>
         </div>
       </div>
-      <button class="btn btn-light" type="button">Remove image</button>`;
+      <button class="btn btn-light" type="button" data-action="remove-image">Remove image</button>`;
     row.querySelectorAll('[data-move]').forEach(btn=>{
       btn.onclick = () => {
         if(moveItemById(colour.images, img.id, Number(btn.dataset.move))){
@@ -448,7 +473,9 @@ function renderColourImages(colour){
     if(img.link){
       row.querySelector('.linkbox button').onclick = function(){ copyText(img.link, this); };
     }
-    row.querySelector('.btn-light').onclick = () => {
+    const retryBtn = row.querySelector('[data-action="retry-image"]');
+    if(retryBtn) retryBtn.onclick = () => { if(img.file && img.status==='error') sendColourImage(colour, img); };
+    row.querySelector('[data-action="remove-image"]').onclick = () => {
       colour.images = colour.images.filter(i=>i.id!==img.id);
       renderColourImages(colour);
       refreshColourOutputs();
@@ -468,12 +495,18 @@ function colourGroupedText(){
 
 function refreshColourOutputs(){
   colourPlainEl.value = colours.length ? colourGroupedText() : '';
+  const failed = colours.reduce((n, c) => n + c.images.filter(i=>i.status==='error').length, 0);
+  const rb = document.getElementById('retryColourFailedBtn');
+  if(rb){ rb.hidden = failed===0; rb.textContent = '🔁 Retry all failed (' + failed + ')'; }
 }
 
 document.getElementById('addColourBtn').onclick = () => addColour('');
 document.getElementById('addAnotherColourBtn').onclick = () => addColour('');
 document.getElementById('clearColoursBtn').onclick = () => { colours = []; colourListEl.innerHTML = ''; refreshColourOutputs(); };
 document.getElementById('copyColourAllBtn').onclick = function(){ if(!colours.length){ alert('Please add a colour first.'); return; } const t=colourGroupedText(); if(!t.trim()){ alert('No links yet.'); return; } copyText(t, this); };
+document.getElementById('retryColourFailedBtn').onclick = () => {
+  colours.forEach(c => c.images.filter(i=>i.status==='error' && i.file).forEach(i => sendColourImage(c, i)));
+};
 document.getElementById('copyColourPlainBtn').onclick = function(){ if(!colourPlainEl.value){ alert('Please add a colour first.'); return; } copyText(colourPlainEl.value, this); };
 document.getElementById('csvColourBtn').onclick = () => {
   if(!colours.length){ alert('Please add a colour first.'); return; }
